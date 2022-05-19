@@ -1,0 +1,26 @@
+{
+  "name": "asar-pack",
+  "author": "fuchsia groan",
+  "version": "1.0.0",
+  "description": "A library to create ASAR files for electron.",
+  "main": "lib/pack.mjs",
+  "repository": {
+      "type": "git",
+      "url": "https://github.com/fuchsia/asar-pack.git"
+  },
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "jasmine"
+  },
+  "keywords": [
+    "asar",
+    "electron"
+  ],
+  "license": "unlicense",
+  "devDependencies": {
+    "asar": "^3.1.0",
+    "jasmine": "^4.1.0"
+  }
+}
