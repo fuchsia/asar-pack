@@ -1,10 +1,9 @@
 ASAR pack
 =========
 
-A simple, zero-dependency library to programatically create electron's ASAR files
-in memory without touching the filesystem or leaving undeleted temp files.
+A simple library to programatically create electron's ASAR files in memory.
 
-```
+```js
 import {writeFileSync,readFileSync} from "node:fs";
 import pack from "asar-pack";
 
@@ -22,8 +21,8 @@ const buffer = pack( function*() {
 fs.writeFileSync( '../out/myfile.asar', buffer );
 ```
 
-If you need files bigger than those that can be created in memory,
-if need to unpack files, or you need a comamnd line tool, you'll need to use
+If you need to unpack files, need a command line tool, or have files
+bigger than can be managed in memory, then you'll need to use
 the "official" [asar library.](https://github.com/electron/asar)
 
 
@@ -34,63 +33,62 @@ install
 npm install asar-pack
 ```
 
-It's just the single ESM module `lib/pack.mjs`. It needs node path and crypto modules.
-The latter is unnecessary (or could be replace with subtle cyrpto) and the former
-we could hack. But is there a case for needed to call this fromt he web?
- 
+It's a single ESM module `lib/pack.mjs`. 
+
+It can't be used from a browser as it depends on node's `path` 
+and `crypto` modules. 
 
 pack
 ----
 
-```
-buffer = pack( iterator, options );
+```js
+buffer = pack( iterable, options );
 ```
 
-- `iterator` 
+- `iterable` 
   
-  An iterator which returns dictionary objects with the syntax:
+  Any iterable that provides a dictionary for each archive member:
 
-  ```
+  ```js
   {
      name: 'member/name',
      data: stringOrData,
-      // integritySource: stringOrData   
+     // integritySource: stringOrData   
   }
   ```
     
   - `name`
 
-     This is the "filename" within the archive; e.g. `'foo/bar.html'` will be
-     available as `'/path/to/app.asar/foo/bar.html'`.
-
-     Forward slashes are supported on windows. (And the directory separator never ends 
-     up in the archive.)
+     The "filename" within the archive; e.g. `foo/bar.html` will be
+     available as `/path/to/app.asar/foo/bar.html`.
      
-     Any root (including the drive, on Windows) or opening './' is excluded. 
-     So `'/foo/bar'', `'foo/bar'`, `'./foo/bar'`, and `'c:\\foo\\bar'` will all be `'archive.asar/foo/bar'`
+     Names are case senstivive. Duplicates may not appear in the archive. 
+     
+     Forward slashes are supported on Windows. 
+     
+     The root drive, root `/` or opening `.` is excluded from the final filename.
+     So `/foo/bar`, `foo/bar`, `./foo/bar`, and `c:\\foo\\bar` all reference `archive.asar/foo/bar`
 
-     It's illegal for any component in path to be be `'..'` or `'.'` - unless `'.'` is the 
-     very first component. So `'./foo/bar'` is allowed but `'foo/./bar'` and 
-     `'foo/../bar'` are illegal. 
-
-
+     It's illegal for any component in path to be be `.` or `..` - unless `.` is the 
+     very first component. So `./foo/bar` is allowed but `foo/./bar` and 
+     `foo/../bar` are illegal. 
+     
   - `data`
 
-     This can either be string - in which case `TextEncoder` is used to convert it
-     to utf8 - or it can be a "buffer" containing the data.
+     This can be either a string - in which case `TextEncoder` is used to convert it
+     to utf8 - or a "buffer" containing the data.
 
-     A buffer can be a node buffer. But it can be any `TypedArray` or `DataView`.
+     A buffer can be a node buffer, a `DataView` or any `TypedArray`.
 
   - `integritySource`
 
      It appears the stock asar library calculates the integrity from the 
-     original file, not its transformed output. So `integritySource`, if present,
-     is used to calculate the hashes. 
- 
-     It is simply the untransformed data. It takes the same form as `data`; i.e.
-     it's the text or a "buffer" containign the data.
-
-     ```
+     original file, not its transformed output. If you want to replicate this
+     beaviour (!) set the `integritySource` to the untransformed data.
+      
+     As per `data` it's either text to be utf8 encoded or a "buffer".
+     
+     ```js
      const orgText = fs.readFileSync('myfile.json'),
            newText = JSON.stringify(JSON.parse(orgText).main = "electron.js");
 
@@ -100,8 +98,8 @@ buffer = pack( iterator, options );
     
 - `options`
   
-   An optional bag of options. You can set `integity: false` to stop sha256 hashes
-   be calculated and added to the archvie.  Electron 18.2.1 appears not to need them. YMMV. 
+   An optional bag of options. You can use `{integrity: false}` to stop sha256 hashes
+   being added to archive; Electron 18.2.1 appears not to need them. YMMV. 
    
 
 File Format
@@ -115,19 +113,17 @@ The file format appears to be:
 - DWORD: directoryLength
 - byte[]: directoryText
 - byte[]: padding (0-3 null bytes used to DWORD align the data.)
-- byte[]: archive members
+- byte[]: archive data
 
 Byte order is little endian.
 
-The directoryText is JSON. For the schmea, see the original asar.
+The directoryText is JSON. For the schmaa, see the original asar. This sets
+the positions of archive memmbers within archive data.
 
-Archive members follow sequentially without alignment padding. But their position
-is set by the directory.
-
-This is based on empirical observations and hunches. 
-It appears to have arrisen because there are two of Google's "pickle" archives:
-one for the directory length and a one for the directory text.
-There aren't enough test cases covering this to confirm it.
+The weird header structure appears to have arrisen because there are two of Google's "pickle" archives:
+one for the directory length and a one for the directory text. It's based on hunches and empirical
+observation rather than a full deconstruction of the code. And there aren't enough test cases covering 
+the code to confirm it.
 
 
 
