@@ -1,6 +1,7 @@
 import {readFileSync,existsSync,statSync,unlinkSync} from "fs";
 import {tmpdir} from "os";
 import * as path from "path";
+import {createHash} from "crypto";
 import { fileURLToPath } from 'url';
 
 import ASAR from "asar";
@@ -123,5 +124,20 @@ describe( "the archive data sanitiser should", () => {
     } );
 } );
 
+it( "the multiblock integirty code should compute the integrity correctly", () => {
+    const block0 = Uint8Array.from( Array.from( { length: 4 * 1024 * 1024 }, ( _,n ) => n % 137 )  ),
+          block1 = Uint8Array.from( Array.from( { length: 23 * 1024 }, ( _,n ) => n % 111 )  ),
+          total = Buffer.concat( [block0, block1] ); 
 
+    const block0hash = createHash( 'sha256' ).update( block0 ).digest( 'hex' ), 
+          block1hash = createHash( 'sha256' ).update( block1).digest( 'hex' ), 
+          totalHash  = createHash( 'sha256' ).update( total ).digest( 'hex' );
+           
+    const buffers = packv( [{name:'data', data: total }] );
+    const node = JSON.parse( String.fromCharCode.apply( undefined, buffers[1] ) ).files.data;
+    expect( node.integrity.hash ).toEqual( totalHash ); 
+    expect( node.integrity.blocks[0] ).toEqual( block0hash ); 
+    expect( node.integrity.blocks[1] ).toEqual( block1hash ); 
+
+} );
 
