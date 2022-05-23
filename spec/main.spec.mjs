@@ -136,8 +136,7 @@ it( "the multiblock integirty code should compute the integrity correctly", () =
     const buffers = packv( [{name:'data', data: total }] );
     const node = JSON.parse( String.fromCharCode.apply( undefined, buffers[1] ) ).files.data;
     expect( node.integrity.hash ).toEqual( totalHash ); 
-    expect( node.integrity.blocks[0] ).toEqual( block0hash ); 
-    expect( node.integrity.blocks[1] ).toEqual( block1hash ); 
+    expect( node.integrity.blocks ).toEqual( [block0hash, block1hash]  ); 
 
 } );
 
