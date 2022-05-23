@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 
 import ASAR from "asar";
 
-import pack from "../lib/pack.mjs";
+import defaultImport,{pack,packv} from "../lib/pack.mjs";
 
 const SCRIPTDIR = path.dirname( fileURLToPath( import.meta.url ) ),
       BASEDIR = path.join( SCRIPTDIR, '..' );
@@ -72,6 +72,9 @@ async function rawCompare( BASEDIR, filesToPack )
         return c;  
     }
 
+it( "pack and default export should be identical" , () => {
+    expect( pack ).toEqual( defaultImport ); 
+} );
 
 // FIXME: these should be stock test files and pre-generated output from asar.
 it( "should create a matching archive for untransformed single block files", async () => {
@@ -119,3 +122,6 @@ describe( "the archive data sanitiser should", () => {
         expect( () => pack( [{ name: './world', data: { buffer, byteOffset: 0, byteLength: 10 } }] ) ).not.toThrow();
     } );
 } );
+
+
+
