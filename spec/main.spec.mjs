@@ -72,6 +72,7 @@ async function rawCompare( BASEDIR, filesToPack )
         return c;  
     }
 
+
 // FIXME: these should be stock test files and pre-generated output from asar.
 it( "should create a matching archive for untransformed single block files", async () => {
     const filesToPack = [ 'lib/pack.mjs', 'package.json', 'README.md' ]; 
@@ -100,3 +101,21 @@ describe( "the archive directory should", () => {
     } );
 } );
 
+describe( "the archive data sanitiser should", () => {
+    it ( "throw if data is missing", () => {
+        expect( () => pack( [{ name: './world' }] ) ).toThrow();
+    } );
+    it ( "throw if data is null", () => {
+        expect( () => pack( [{ name: './world', data: null }] ) ).toThrow();
+    } );
+    it ( "throw if data is an ordinary array", () => {
+        expect( () => pack( [{ name: './world', data: [] }] ) ).toThrow();
+    } );
+    it ( "throw if data is an empty object", () => {
+        expect( () => pack( [{ name: './world', data: {} }] ) ).toThrow();
+    } );
+    it ( "accept a pseudo-array-bufferview", () => {
+        const buffer = new ArrayBuffer( 30 );
+        expect( () => pack( [{ name: './world', data: { buffer, byteOffset: 0, byteLength: 10 } }] ) ).not.toThrow();
+    } );
+} );
