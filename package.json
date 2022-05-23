@@ -1,7 +1,7 @@
 {
   "name": "asar-pack",
   "author": "fuchsia groan",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A library to create ASAR files for electron.",
   "main": "lib/pack.mjs",
   "repository": {
