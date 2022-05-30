@@ -9,8 +9,8 @@ import pack from "asar-pack";
 
 const buffer = pack( [
     { name: 'src/main.js', data: fs.readFileSync( '../src/main.js' ) },
-    { name: 'package.json', data: JSON.stringify( { main: "src/main.js" } )  }
-}());
+    { name: 'package.json', data: `{ "main": "src/main.js" }` }
+]);
 
 fs.writeFileSync( '../out/myfile.asar', buffer );
 ```
@@ -57,12 +57,12 @@ pack( members\[, options\] )
 
 Create a buffer containing the archive. 
 
-Members are output to the final archive in the order they are passed to `pack()`.
+Members are placed in the archive in the order they are passed to `pack()`.
     
-Using `pack( members, {integrity:false})` stops sha256 hashes being added to the archive directory for each individual member.
-Electron 18.2.1 doesn't seem to check them (relying instead on a single hash for the whole archive).  YMMV.
+Using `pack( members, {integrity:false})` stops per-member sha256 hashes being added to the archive directory.
+Electron 18.2.1 doesn't seem to check them (relying, instead, on a single hash for the whole archive).  YMMV.
 
-_N.B. This function can be both imported explicitly as `pack()` and also as the (unnamed) default for the module. It's the same function, either way._
+_N.B. This function can be imported explicitly as `pack()` and also via the (unnamed) default for the module. It's the same function, either way._
  
 ArchiveMember
 ------------
@@ -122,7 +122,7 @@ original file, not its transformed value. If you want to replicate this
 behaviour (!) set the `integritySource` to the untransformed data. Otherwise
 omit it.
 
-As per `data`, it's either text to be utf8 encoded or a "buffer":
+As per `data`, it's either the literal data or text to be utf8 encoded.
      
 ```js
 const orgText = fs.readFileSync('myfile.json'),
@@ -138,7 +138,7 @@ packv( members\[, options\] )
 * `members`: &LT;Iterable&GT; yielding [&LT;ArchiveMember&GT;](#archivemember)
 * `options`: &LT;Object&GT;
     + `integrity`: &LT;boolean&GT;
-* Return: [&LT;Buffer[]&GT;](https://nodejs.org/api/buffer.html#class-buffer)
+* Return: &LT;Uint8Array[]&GT;
 
 Create the headers for the archive, and format data members as Uint8Arrays, but stop short 
 of concatenating them into a single chunk of memory.
@@ -158,7 +158,9 @@ const fh = fs.openSync( 'app.asar', 'w' );
 fs.writevSync( fh, buffers );
 fs.closeSync(fh);
 ```    
-    
+
+As of 1.0.2, there is one buffer for every member, plus an opening buffer that contains
+the archive header.    
  
 File Format
 ----------

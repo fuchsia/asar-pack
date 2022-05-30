@@ -22,6 +22,14 @@ function createTempFilename( prefix  )
         }
     }
 
+function fetchDirectory( asarHeaderOrHeaderBuffer )
+    {
+        const headerView = new DataView( asarHeaderOrHeaderBuffer.buffer, asarHeaderOrHeaderBuffer.byteOffset, asarHeaderOrHeaderBuffer.byteLength );
+        const directoryBytes = headerView.getUint32( 12, true );
+        const utf8Directory = new Uint8Array( asarHeaderOrHeaderBuffer.buffer, 16, directoryBytes );
+        const decoder = new TextDecoder( undefined, { fatal: true }  );
+        return JSON.parse( decoder.decode( utf8Directory ) );
+    }
 
 async function rawCompare( BASEDIR, filesToPack )
     {
@@ -124,6 +132,7 @@ describe( "the archive data sanitiser should", () => {
     } );
 } );
 
+
 it( "the multiblock integirty code should compute the integrity correctly", () => {
     const block0 = Uint8Array.from( Array.from( { length: 4 * 1024 * 1024 }, ( _,n ) => n % 137 )  ),
           block1 = Uint8Array.from( Array.from( { length: 23 * 1024 }, ( _,n ) => n % 111 )  ),
@@ -134,7 +143,7 @@ it( "the multiblock integirty code should compute the integrity correctly", () =
           totalHash  = createHash( 'sha256' ).update( total ).digest( 'hex' );
            
     const buffers = packv( [{name:'data', data: total }] );
-    const node = JSON.parse( String.fromCharCode.apply( undefined, buffers[1] ) ).files.data;
+    const node = fetchDirectory( buffers[0] ).files.data;
     expect( node.integrity.hash ).toEqual( totalHash ); 
     expect( node.integrity.blocks ).toEqual( [block0hash, block1hash]  ); 
 
