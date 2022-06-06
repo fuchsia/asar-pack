@@ -22,7 +22,7 @@ function createTempFilename( prefix  )
         }
     }
 
-function fetchDirectory( asarHeaderOrHeaderBuffer )
+function Asar_fetchDirectory( asarHeaderOrHeaderBuffer )
     {
         const headerView = new DataView( asarHeaderOrHeaderBuffer.buffer, asarHeaderOrHeaderBuffer.byteOffset, asarHeaderOrHeaderBuffer.byteLength );
         const directoryBytes = headerView.getUint32( 12, true );
@@ -54,9 +54,10 @@ async function rawCompare( BASEDIR, filesToPack )
             }
             // Do we need the directory objects or can we skip them?
             destfile = createTempFilename( 'asar-pack-test' );
+            
             await ASAR.createPackageFromFiles( BASEDIR, destfile, files, metadata );
             officalImage = readFileSync( destfile );
-            console.log( "", destfile );
+            
         } finally {
             try {
                 unlinkSync( destfile );
@@ -91,6 +92,31 @@ it( "should create a matching archive for untransformed single block files", asy
     const c = await rawCompare( BASEDIR, filesToPack ); 
     expect( c ).toEqual( 0 ); 
 } );
+
+
+describe( "the header padding", () => {
+    const PADDING_FILES =[ "00000-bytes-padding.dat", "0001-bytes-padding.dat", "002-bytes-padding.dat", "03-bytes-padding.dat" ];    
+    it( "should be identical for all the header padding-reference files", () => {
+        const referenceLength = pack( [{ name: PADDING_FILES[0], data: new Uint8Array( 0 )}] ).length;
+        for ( let i = 1; i < PADDING_FILES.length; ++i ) {
+            expect( pack( [{name: PADDING_FILES[i], data: new Uint8Array( 0 )}] ).length ).toEqual( referenceLength ); 
+        }
+    } );
+    
+    // @issue Should we be using the oficial distro or should we be hard coding some referfence files?
+    // These files are small enough (284 bytes) that we could base64 encode them in here.
+    for ( let i = 0; i < PADDING_FILES.length; ++i ) {
+        it( `should match the official asar for ${i} bytes`, async () => {
+            const filesToPack = [ PADDING_FILES[i] ]; 
+            const c = await rawCompare( path.join( BASEDIR, 'spec/data' ), filesToPack ); 
+            expect( c ).toEqual( 0 ); 
+        } );
+    }
+
+} );
+
+
+
 
 describe( "the archive directory should", () => {
     it ( "allow a leading '.'", () => {
@@ -133,7 +159,7 @@ describe( "the archive data sanitiser should", () => {
 } );
 
 
-it( "the multiblock integirty code should compute the integrity correctly", () => {
+it( "the multiblock integrity code should compute the integrity correctly", () => {
     const block0 = Uint8Array.from( Array.from( { length: 4 * 1024 * 1024 }, ( _,n ) => n % 137 )  ),
           block1 = Uint8Array.from( Array.from( { length: 23 * 1024 }, ( _,n ) => n % 111 )  ),
           total = Buffer.concat( [block0, block1] ); 
@@ -143,7 +169,7 @@ it( "the multiblock integirty code should compute the integrity correctly", () =
           totalHash  = createHash( 'sha256' ).update( total ).digest( 'hex' );
            
     const buffers = packv( [{name:'data', data: total }] );
-    const node = fetchDirectory( buffers[0] ).files.data;
+    const node = Asar_fetchDirectory( buffers[0] ).files.data;
     expect( node.integrity.hash ).toEqual( totalHash ); 
     expect( node.integrity.blocks ).toEqual( [block0hash, block1hash]  ); 
 
