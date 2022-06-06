@@ -17,7 +17,7 @@ fs.writeFileSync( '../out/myfile.asar', buffer );
 
 If your archive can't fit in memory, you'll need
 the "official" [asar library.](https://github.com/electron/asar) (But, if you can load
-all the files, try `packv()`.)
+all the files, try [`packv()`](#packv-members-options-).)
 
 There's no command line tool. Again, use the offcial one.
 
@@ -195,3 +195,14 @@ The integrity field for individual members seems to be ignored by Electron 18.2.
 library records incorrect values for transformed files.
 
 There is no hash for the directory iself. (Or if there is, I've missed it.)
+
+CHANGES
+-------
+
+### 1.02   
+   - `packv()` is now guaranted to return the header in a single buffer.  
+   - Fixed a bug in the header alignment code. 
+  
+### 1.01
+    - Added `packv()` 
+
