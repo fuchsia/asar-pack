@@ -199,10 +199,9 @@ There is no hash for the directory iself. (Or if there is, I've missed it.)
 CHANGES
 -------
 
-### 1.02   
+### 1.0.2   
    - `packv()` is now guaranted to return the header in a single buffer.  
-   - Fixed a bug in the header alignment code. 
+   - Fixed a bug that caused headers to have incorrect alignment. Sorry.
   
-### 1.01
-    - Added `packv()` 
-
+### 1.0.1
+   - Added `packv()`
